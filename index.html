@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小學中文工作紙自動生成器 (24pt 清新柔和版)</title>
+    <!-- 引入 Tailwind CSS 用於快速構建美觀的 UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 載入適合中文閱讀的柔和字型 */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', 'PMingLiU', sans-serif;
+            background-color: #F7F5F0; /* 溫暖柔和的燕麥奶色底色 */
+        }
+
+        /* 核心要求：工作紙內容必須是 24pt 字體大小 */
+        .worksheet-text {
+            font-size: 24pt;
+            line-height: 2.4;
+            color: #2D3732; /* 溫和的深炭綠，比純黑更柔和 */
+        }
+
+        /* 中文標準寫作格子樣式 - 確保格子本身不換行 */
+        .grid-container {
+            display: inline-flex;
+            vertical-align: middle;
+            margin: 0 8px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .grid-cell {
+            width: 48px;
+            height: 48px;
+            border: 2px dashed #8FA499; /* 柔和莫蘭迪綠虛線，更有田字格溫馨感 */
+            background-color: #ffffff;
+            display: inline-block;
+            text-align: center;
+            line-height: 44px;
+            font-size: 24pt;
+            font-weight: bold;
+            color: #2D3732;
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.02);
+        }
+
+        /* 線上作答輸入框樣式 */
+        .grid-input {
+            width: 48px;
+            height: 48px;
+            border: 2px solid #A1B5A9; /* 柔和粉綠框 */
+            background-color: #fff;
+            text-align: center;
+            font-size: 24pt;
+            font-weight: bold;
+            color: #4A6B5D; /* 柔和深綠字 */
+            margin: 0 2px;
+            padding: 0;
+            outline: none;
+            border-radius: 8px; /* 稍微圓角，更顯溫柔 */
+            transition: all 0.15s ease-in-out;
+            display: inline-block;
+            vertical-align: middle;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        
+        .grid-input:focus {
+            border-color: #729384;
+            background-color: #F0F5F2;
+            box-shadow: 0 0 0 3px rgba(114, 147, 132, 0.25);
+        }
+
+        /* 答題反饋樣式 - 清新柔和的對錯色調 */
+        .feedback-correct {
+            border-color: #82A384 !important;
+            background-color: #EDF3EE !important;
+            color: #4E6E50 !important;
+        }
+
+        .feedback-incorrect {
+            border-color: #D98880 !important;
+            background-color: #FDF3F2 !important;
+            color: #A3524A !important;
+        }
+
+        /* 確保題目整行排版優美 */
+        .question-row {
+            display: block;
+            width: 100%;
+            margin-bottom: 28px;
+            word-break: break-all;
+        }
+
+        /* 自訂滾動條樣式 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #F1F5F2;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #CBDAD2;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #B2C5BC;
+        }
+
+        /* 列印專用 CSS 設定 */
+        @media print {
+            /* 隱藏所有不需要列印的控制面板、按鈕、設置面板、線上輸入框以及答案頁 */
+            .no-print, .interactive-input {
+                display: none !important;
+            }
+            
+            /* 顯示專為列印設計的空白格子 */
+            .print-grid {
+                display: inline-flex !important;
+            }
+
+            body {
+                background-color: #ffffff;
+                color: #000000;
+            }
+
+            .print-page {
+                width: 210mm;
+                min-height: 297mm;
+                padding: 10mm 15mm;
+                margin: 0;
+                box-shadow: none;
+                background: white;
+                border: none;
+            }
+
+            /* 確保列印時字體精確為 24pt，並轉回適合列印的實線黑格 */
+            .worksheet-text {
+                font-size: 24pt !important;
+                line-height: 2.5 !important;
+            }
+            
+            .grid-cell {
+                border: 2px solid #000000 !important;
+                background: none !important;
+            }
+            
+            .title-print {
+                font-size: 32pt !important;
+                margin-bottom: 20px !important;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- 主控制面板 (僅在網頁顯示，列印時自動隱藏) -->
+    <div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-sm p-6 mb-6 no-print border border-slate-100">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4 mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-[#4A6B5D] flex items-center gap-2">
+                    <span>🌱</span> 小學中文工作紙自動生成器
+                </h1>
+                <p class="text-slate-500 mt-1 text-sm">
+                    專為家長設計的清新風小學溫習工具 · 每次生成皆會隨機排序
+                </p>
+            </div>
+        </div>
+        
+        <!-- 主要操作按鈕 -->
+        <div class="flex flex-wrap gap-3">
+            <button onclick="generateNewWorksheet()" class="bg-[#729384] hover:bg-[#5F7D70] text-white font-semibold py-2.5 px-5 rounded-xl shadow-sm transition flex items-center gap-2 text-sm">
+                🔄 生成新工作紙
+            </button>
+            <button onclick="checkAnswers()" class="bg-[#8DA89B] hover:bg-[#7B9589] text-white font-semibold py-2.5 px-5 rounded-xl shadow-sm transition flex items-center gap-2 text-sm">
+                ✔️ 線上對答案
+            </button>
+            <button onclick="printWorksheet()" class="bg-[#9AB3C7] hover:bg-[#86A0B5] text-white font-semibold py-2.5 px-5 rounded-xl shadow-sm transition flex items-center gap-2 text-sm">
+                🖨️ 下載 / 列印 PDF
+            </button>
+            <button onclick="resetExercise()" class="bg-[#E5C3B3] hover:bg-[#D4AFA0] text-[#6E4F41] font-semibold py-2.5 px-5 rounded-xl shadow-sm transition flex items-center gap-2 text-sm">
+                🧹 清空重填
+            </button>
+            <button onclick="toggleSettings()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-5 rounded-xl transition flex items-center gap-2 text-sm ml-auto">
+                ⚙️ 詞庫設定 (<span id="vocabularyCount" class="bg-[#729384] text-white px-1.5 py-0.5 rounded text-xs">10</span>)
+            </button>
+        </div>
+
+        <!-- 詞庫管理設定區 (預設隱藏) -->
+        <div id="settingsPanel" class="hidden border-t border-slate-100 pt-6 mt-6">
+            <div class="bg-[#F4F7F5] rounded-2xl p-5 border border-[#E4ECE8]">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-bold text-[#4A6B5D] flex items-center gap-2">
+                        📝 自由增減詞庫與題目
+                    </h3>
+                    <button onclick="triggerRestoreDefaults()" class="text-xs text-[#A3524A] hover:text-[#883C35] font-semibold flex items-center gap-1">
+                        ↩️ 恢復預設十組詞語
+                    </button>
+                </div>
+
+                <!-- 參數設定：生成題數 -->
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6 bg-white p-4 rounded-xl border border-[#E2EAE6]">
+                    <label class="font-semibold text-slate-700 text-sm">每次生成題目數量：</label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="questionCountLimit" min="3" max="30" value="10" class="w-20 px-3 py-1.5 border border-slate-200 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-[#729384] text-sm">
+                        <span class="text-xs text-slate-400">題 (上限取決於您下方的詞庫總量)</span>
+                    </div>
+                </div>
+
+                <!-- 新增詞語表單 -->
+                <div class="bg-white p-4 rounded-xl border border-[#E2EAE6] mb-6">
+                    <h4 class="font-bold text-slate-700 text-sm mb-3 flex items-center gap-1 text-[#4A6B5D]">
+                        <span>➕</span> 新增自訂詞語及題目
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                        <div class="md:col-span-3">
+                            <input type="text" id="newWord" placeholder="輸入詞語 (例如: 漂亮)" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#729384]">
+                        </div>
+                        <div class="md:col-span-7">
+                            <input type="text" id="newSentence" placeholder="輸入包含 {blank} 的句子 (例如: 這裡的花真{blank}。)" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#729384]">
+                        </div>
+                        <div class="md:col-span-2">
+                            <button onclick="addNewItem()" class="w-full bg-[#729384] hover:bg-[#5F7D70] text-white font-semibold py-2.5 rounded-lg text-sm transition">
+                                確認新增
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2.5">※ 提示：請務必在句子中輸入 <b>{blank}</b>，系統會自動在該位置產生與詞語字數相同數量的中文寫作格子。</p>
+                </div>
+
+                <!-- 目前詞庫列表 -->
+                <h4 class="font-bold text-slate-700 text-sm mb-3">📋 目前詞庫總覽</h4>
+                <div class="max-h-60 overflow-y-auto border border-slate-100 rounded-xl bg-white custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#F4F7F5] border-b border-slate-100 text-xs font-bold text-slate-500">
+                                <th class="p-3">詞語</th>
+                                <th class="p-3">題目句子 (帶有格子位置)</th>
+                                <th class="p-3 text-center" style="width: 80px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vocabularyTableBody" class="text-sm text-slate-600">
+                            <!-- 詞庫表格將動態生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 線上對答案結果反饋 -->
+        <div id="scoreBoard" class="mt-4 p-4 rounded-xl text-slate-700 font-medium hidden text-center border">
+            <!-- 得分將顯示於此 -->
+        </div>
+    </div>
+
+    <!-- 自訂提示 Toast 訊息 -->
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-[#3E5349] text-white px-5 py-3 rounded-xl shadow-lg transform translate-y-[-100px] opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-2">
+        <span id="toastIcon">🌱</span>
+        <span id="toastText">提示訊息</span>
+    </div>
+
+    <!-- 自訂確認對話方塊 Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl max-w-sm w-full mx-4 p-6 shadow-xl border border-slate-100 transform scale-95 transition-transform duration-300">
+            <div class="text-center">
+                <span class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-[#EDF3EE] text-[#729384] text-xl mb-4">
+                    ⚠️
+                </span>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">確定操作嗎？</h3>
+                <p id="confirmModalText" class="text-sm text-slate-500 mb-6">這項操作將會覆蓋您目前的設定。</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeConfirmModal()" class="flex-1 py-2 px-4 border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition">
+                    取消
+                </button>
+                <button id="confirmModalBtn" class="flex-1 py-2 px-4 bg-[#729384] hover:bg-[#5F7D70] text-white text-sm font-semibold rounded-xl transition">
+                    確認
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工作紙主體紙張容器 -->
+    <div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-sm p-8 md:p-12 border border-slate-100 print-page">
+        
+        <!-- 題目頁面 -->
+        <div class="worksheet-section">
+            <!-- 標題 -->
+            <div class="text-center mb-8">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4 title-print">中文科填充練習（不供詞）</h2>
+                <div class="flex justify-center gap-8 text-base md:text-lg text-slate-600 font-medium border-b border-slate-100 pb-4">
+                    <span>姓名：_________________</span>
+                    <span>日期：_________________</span>
+                </div>
+            </div>
+
+            <!-- 說明與備選詞語提示 (僅供溫習參考，列印時自動隱藏) -->
+            <div class="mb-8 p-4 bg-[#F2F6F3] rounded-2xl border border-[#E2EAE5] no-print">
+                <p class="text-[#4A6B5D] font-bold mb-2 text-base flex items-center gap-1">
+                    <span>💡</span> 溫習詞語範圍（目前設定之所有詞庫）：
+                </p>
+                <div id="studyWordContainer" class="flex flex-wrap gap-2 text-[#4A6B5D] font-bold text-lg">
+                    <!-- 詞語標籤將由 JS 動態生成 -->
+                </div>
+                <p class="text-xs text-slate-400 mt-2.5">（提示：本練習為「不供詞填充」。列印成 PDF 或紙張時，此提示方框會被自動隱藏，以訓練小朋友獨立思考。）</p>
+            </div>
+
+            <!-- 題目列表 -->
+            <div id="questionsContainer" class="worksheet-text">
+                <!-- 題目將由 JavaScript 動態生成 -->
+            </div>
+        </div>
+
+        <!-- 答案頁 (列印時會被 no-print 隱藏，不會列印出來) -->
+        <div class="pt-8 border-t border-dashed border-slate-200 mt-12 no-print">
+            <div class="text-center mb-6">
+                <h3 class="text-2xl font-bold text-[#A3524A]">【 參考答案 】</h3>
+                <p class="text-slate-400 text-xs">（此答案頁僅在網頁上供對答案參考，列印成 PDF 時已設定自動隱藏。）</p>
+            </div>
+            
+            <div id="answersContainer" class="grid grid-cols-2 gap-4 max-w-md mx-auto text-lg md:text-xl font-bold text-slate-700 p-6 bg-[#FAF9F6] rounded-2xl border border-slate-100">
+                <!-- 答案將由 JavaScript 動態生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 頁尾宣告 -->
+    <div class="text-center text-slate-400 text-xs mt-8 mb-12 no-print">
+        © 中文工作紙自動生成系統 · 專為家長與小朋友打造的學習輔助工具
+    </div>
+
+    <script>
+        // 預設十組詞語及句子資料庫
+        const defaultDatabase = [
+            { word: "圖畫", sentence: "他在美術課上畫了一幅精緻的{blank}，獲得老師讚賞。" },
+            { word: "彩色", sentence: "妹妹用{blank}筆在白紙上畫出了一道美麗的彩虹。" },
+            { word: "漂亮", sentence: "媽媽今天穿了一件非常{blank}的連身裙去慢跑好去處。" },
+            { word: "打掃", sentence: "每逢新年前夕，我們全家人都會合力大{blank}。" },
+            { word: "整潔", sentence: "他的書房總是收拾得十分{blank}，書籍排列得很整齊。" },
+            { word: "馬路", sentence: "過{blank}的時候，我們必須看清紅綠燈，注意安全。" },
+            { word: "知道", sentence: "如果小明早{blank}這件事，他一定會來幫忙。" },
+            { word: "感謝", sentence: "我們應該要常常面帶笑容，對幫助我們的人表示{blank}。" },
+            { word: "要求", sentence: "教練對我們的練習{blank}非常嚴格，希望我們能奪冠。" },
+            { word: "放開", sentence: "風箏越飛越高，爸爸叫我慢慢{blank}手中的線繩。" }
+        ];
+
+        // 記憶體中的工作詞庫，允許自由加減
+        let activeDatabase = JSON.parse(JSON.stringify(defaultDatabase));
+
+        // 當前隨機生成出的考卷題目列表
+        let currentQuestions = [];
+
+        // 全域回呼函數 (用於自訂確認視窗)
+        let confirmActionCallback = null;
+
+        // 追蹤 IME 輸入狀態
+        let isComposing = false;
+
+        // 初始化載入
+        window.onload = function() {
+            renderVocabularySettings();
+            generateNewWorksheet();
+            setupKeyboardNavigation();
+        };
+
+        // 顯示 Toast 提示
+        function showToast(text, icon = "🌱") {
+            const toast = document.getElementById("toastMessage");
+            document.getElementById("toastText").innerText = text;
+            document.getElementById("toastIcon").innerText = icon;
+            
+            toast.style.transform = "translateY(0)";
+            toast.style.opacity = "1";
+            
+            setTimeout(() => {
+                toast.style.transform = "translateY(-100px)";
+                toast.style.opacity = "0";
+            }, 3000);
+        }
+
+        // 開啟自訂確認 Modal 彈窗
+        function openConfirmModal(message, confirmCallback) {
+            const modal = document.getElementById("confirmModal");
+            const modalText = document.getElementById("confirmModalText");
+            
+            modalText.innerText = message;
+            confirmActionCallback = confirmCallback;
+            
+            modal.classList.remove("hidden");
+            setTimeout(() => {
+                modal.classList.remove("opacity-0");
+                modal.querySelector('div').classList.remove("scale-95");
+            }, 10);
+        }
+
+        // 關閉自訂確認 Modal 彈窗
+        function closeConfirmModal() {
+            const modal = document.getElementById("confirmModal");
+            modal.classList.add("opacity-0");
+            modal.querySelector('div').classList.add("scale-95");
+            
+            setTimeout(() => {
+                modal.classList.add("hidden");
+                confirmActionCallback = null;
+            }, 300);
+        }
+
+        // 綁定確認視窗確認按鈕
+        document.getElementById("confirmModalBtn").onclick = function() {
+            if (confirmActionCallback) {
+                confirmActionCallback();
+            }
+            closeConfirmModal();
+        };
+
+        // 開關「詞庫設定」控制面板
+        function toggleSettings() {
+            const panel = document.getElementById("settingsPanel");
+            panel.classList.toggle("hidden");
+        }
+
+        // 渲染「詞庫設定」列表畫面
+        function renderVocabularySettings() {
+            // 更新詞語數量顯示
+            document.getElementById("vocabularyCount").innerText = activeDatabase.length;
+            
+            // 更新温習提示區的詞語標籤
+            const studyContainer = document.getElementById("studyWordContainer");
+            studyContainer.innerHTML = "";
+            activeDatabase.forEach(item => {
+                const span = document.createElement("span");
+                span.className = "px-3 py-1 bg-[#EDF3EE] rounded-xl border border-[#D5E4DC] text-[#4A6B5D] font-medium shadow-sm text-sm";
+                span.innerText = item.word;
+                studyContainer.appendChild(span);
+            });
+
+            // 渲染管理設定表格
+            const tbody = document.getElementById("vocabularyTableBody");
+            tbody.innerHTML = "";
+            activeDatabase.forEach((item, index) => {
+                const tr = document.createElement("tr");
+                tr.className = "border-b border-slate-50 hover:bg-[#F9FBFA] transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-800">${item.word}</td>
+                    <td class="p-3 text-slate-500 font-mono text-xs">${item.sentence}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteItem(${index})" class="text-[#A3524A] hover:text-[#883C35] font-semibold hover:underline text-xs">
+                            刪除
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 新增詞語及句子
+        function addNewItem() {
+            const wordInput = document.getElementById("newWord");
+            const sentenceInput = document.getElementById("newSentence");
+            
+            const word = wordInput.value.trim();
+            const sentence = sentenceInput.value.trim();
+
+            if (!word) {
+                showToast("請輸入詞語！", "❌");
+                return;
+            }
+            if (!sentence) {
+                showToast("請輸入對應的題目句子！", "❌");
+                return;
+            }
+            if (!sentence.includes("{blank}")) {
+                showToast("句子中必須包含 {blank} 作為挖空位置！", "❌");
+                return;
+            }
+
+            // 加進記憶體詞庫
+            activeDatabase.push({ word, sentence });
+            
+            // 清空輸入框
+            wordInput.value = "";
+            sentenceInput.value = "";
+            
+            showToast("成功加入新詞語！", "🎉");
+            renderVocabularySettings();
+            
+            // 自動調高上限
+            document.getElementById("questionCountLimit").max = activeDatabase.length;
+        }
+
+        // 刪除特定詞語
+        function deleteItem(index) {
+            if (activeDatabase.length <= 3) {
+                showToast("詞庫至少需要保留 3 個詞語才能正常生成工作紙！", "❌");
+                return;
+            }
+            activeDatabase.splice(index, 1);
+            showToast("詞語已刪除", "🗑️");
+            renderVocabularySettings();
+            
+            // 調整最大數限制
+            const limitInput = document.getElementById("questionCountLimit");
+            limitInput.max = activeDatabase.length;
+            if (parseInt(limitInput.value) > activeDatabase.length) {
+                limitInput.value = activeDatabase.length;
+            }
+        }
+
+        // 觸發恢復預設十組
+        function triggerRestoreDefaults() {
+            openConfirmModal("確定要放棄目前所有的自訂詞庫，並還原為最初預設的十組詞語嗎？", function() {
+                activeDatabase = JSON.parse(JSON.stringify(defaultDatabase));
+                document.getElementById("questionCountLimit").value = 10;
+                document.getElementById("questionCountLimit").max = 10;
+                showToast("已成功重設為預設詞庫！", "🔄");
+                renderVocabularySettings();
+                generateNewWorksheet();
+            });
+        }
+
+        // 洗牌演算法 (Fisher-Yates Shuffle)
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        // 生成全新工作紙
+        function generateNewWorksheet() {
+            // 取得家長設定的生成題數
+            const limitInput = document.getElementById("questionCountLimit");
+            let countLimit = parseInt(limitInput.value) || 10;
+            
+            // 安全防護邊界值
+            if (countLimit > activeDatabase.length) {
+                countLimit = activeDatabase.length;
+                limitInput.value = countLimit;
+            }
+            if (countLimit < 3) {
+                countLimit = 3;
+                limitInput.value = 3;
+            }
+
+            // 隨機選出指定數量的題目，並打亂順序
+            const shuffledPool = shuffle([...activeDatabase]);
+            currentQuestions = shuffledPool.slice(0, countLimit);
+            
+            const container = document.getElementById("questionsContainer");
+            container.innerHTML = ""; // 清空舊題目
+
+            currentQuestions.forEach((item, index) => {
+                const questionNumber = index + 1;
+                const sentence = item.sentence;
+                const wordLength = item.word.length;
+                
+                // 拆分句子以在 {blank} 處插入格子
+                const parts = sentence.split("{blank}");
+                
+                // 創建整行題目容器 (確保格子與字體大小完美契合)
+                const qDiv = document.createElement("div");
+                qDiv.className = "question-row";
+                
+                // 1. 組合前半句
+                let htmlStr = `<span>${questionNumber}. ${parts[0]}</span>`;
+                
+                // 2. 組合線上互動式輸入格子 (no-print)
+                // 移除限制 IME 的 maxlength 屬性
+                htmlStr += `<span class="interactive-input inline-flex mx-1">`;
+                for (let i = 0; i < wordLength; i++) {
+                    htmlStr += `<input type="text" class="grid-input" 
+                                       data-qindex="${index}" 
+                                       data-charindex="${i}" 
+                                       autocomplete="off" 
+                                       inputmode="text">`;
+                }
+                htmlStr += `</span>`;
+                
+                // 3. 組合列印專用實體格子 (預設隱藏，列印時顯示)
+                htmlStr += `<span class="print-grid hidden grid-container">`;
+                for (let i = 0; i < wordLength; i++) {
+                    htmlStr += `<span class="grid-cell"></span>`;
+                }
+                htmlStr += `</span>`;
+                
+                // 4. 組合後半句
+                htmlStr += `<span>${parts[1]}</span>`;
+                
+                qDiv.innerHTML = htmlStr;
+                container.appendChild(qDiv);
+            });
+
+            // 生成答案頁
+            generateAnswerKey();
+            
+            // 隱藏線上得分看板
+            const scoreBoard = document.getElementById("scoreBoard");
+            scoreBoard.classList.add("hidden");
+            scoreBoard.innerHTML = "";
+        }
+
+        // 設置極其流暢的鍵盤與游標導航系統 (解決「格子後不能立即跳到下一行」的問題，並支援 IME 輸入)
+        function setupKeyboardNavigation() {
+            const container = document.getElementById("questionsContainer");
+            
+            // 監聽中文輸入法組字開始
+            container.addEventListener("compositionstart", function(e) {
+                isComposing = true;
+            });
+
+            // 監聽中文輸入法組字結束
+            container.addEventListener("compositionend", function(e) {
+                isComposing = false;
+                // 稍微延遲以確保輸入框的 value 已完全更新
+                setTimeout(() => {
+                    handleInputJump(e.target);
+                }, 10);
+            });
+
+            // 使用事件代理，統一處理容器內的所有 input 事件
+            container.addEventListener("input", function(e) {
+                if (isComposing) return; // 輸入法未完成時不干擾跳轉
+                handleInputJump(e.target);
+            });
+
+            // 處理鍵盤特殊按鍵：退格(Backspace)、Enter 鍵、方向鍵(Arrow Keys)
+            container.addEventListener("keydown", function(e) {
+                if (isComposing) return;
+                
+                if (e.target.classList.contains("grid-input")) {
+                    const input = e.target;
+                    const qIndex = parseInt(input.getAttribute("data-qindex"));
+                    const charIndex = parseInt(input.getAttribute("data-charindex"));
+                    
+                    // 退格鍵 (Backspace) 往回跳
+                    if (e.key === "Backspace") {
+                        if (input.value.length === 0) {
+                            // 尋找前一個格子
+                            let prevInput = document.querySelector(`input[data-qindex="${qIndex}"][data-charindex="${charIndex - 1}"]`);
+                            
+                            // 如果當前已經是該行第一題，退回「上一行」的最後一格
+                            if (!prevInput && qIndex > 0) {
+                                const prevWordLength = currentQuestions[qIndex - 1].word.length;
+                                prevInput = document.querySelector(`input[data-qindex="${qIndex - 1}"][data-charindex="${prevWordLength - 1}"]`);
+                            }
+                            
+                            if (prevInput) {
+                                prevInput.focus();
+                                prevInput.value = ""; // 順便幫忙清空前一格
+                                e.preventDefault();
+                            }
+                        } else {
+                            input.value = ""; // 直接清空當前格
+                            e.preventDefault();
+                        }
+                    }
+                    
+                    // Enter 鍵直接跳到「下一行（下一題）」起點
+                    if (e.key === "Enter") {
+                        const nextQInput = document.querySelector(`input[data-qindex="${qIndex + 1}"][data-charindex="0"]`);
+                        if (nextQInput) {
+                            nextQInput.focus();
+                            nextQInput.select();
+                        }
+                        e.preventDefault();
+                    }
+
+                    // 左方向鍵 ArrowLeft
+                    if (e.key === "ArrowLeft") {
+                        let prevInput = document.querySelector(`input[data-qindex="${qIndex}"][data-charindex="${charIndex - 1}"]`);
+                        if (!prevInput && qIndex > 0) {
+                            const prevWordLength = currentQuestions[qIndex - 1].word.length;
+                            prevInput = document.querySelector(`input[data-qindex="${qIndex - 1}"][data-charindex="${prevWordLength - 1}"]`);
+                        }
+                        if (prevInput) {
+                            prevInput.focus();
+                            e.preventDefault();
+                        }
+                    }
+
+                    // 右方向鍵 ArrowRight
+                    if (e.key === "ArrowRight") {
+                        let nextInput = document.querySelector(`input[data-qindex="${qIndex}"][data-charindex="${charIndex + 1}"]`);
+                        if (!nextInput) {
+                            nextInput = document.querySelector(`input[data-qindex="${qIndex + 1}"][data-charindex="0"]`);
+                        }
+                        if (nextInput) {
+                            nextInput.focus();
+                            e.preventDefault();
+                        }
+                    }
+                }
+            });
+        }
+
+        // 輸入限制與流暢跳轉函數
+        function handleInputJump(input) {
+            if (!input.classList.contains("grid-input")) return;
+
+            // 確保只填入一個中文字
+            if (input.value.length > 1) {
+                input.value = input.value.slice(-1);
+            }
+
+            const qIndex = parseInt(input.getAttribute("data-qindex"));
+            const charIndex = parseInt(input.getAttribute("data-charindex"));
+
+            if (input.value.length >= 1) {
+                // 1. 尋找當前題目下一個格子
+                let nextInput = document.querySelector(`input[data-qindex="${qIndex}"][data-charindex="${charIndex + 1}"]`);
+                
+                // 2. 如果當前題目已填滿，無縫跳往「下一行（下一題）」的第一個格子
+                if (!nextInput) {
+                    nextInput = document.querySelector(`input[data-qindex="${qIndex + 1}"][data-charindex="0"]`);
+                }
+                
+                if (nextInput) {
+                    nextInput.focus();
+                    nextInput.select(); // 選取文字方便覆蓋
+                }
+            }
+        }
+
+        // 列印工作紙的強化機制函數 (解決部份沙盒/iframe限制列印的問題)
+        function printWorksheet() {
+            window.focus();
+            window.print();
+        }
+
+        // 生成答案頁
+        function generateAnswerKey() {
+            const container = document.getElementById("answersContainer");
+            container.innerHTML = "";
+            
+            currentQuestions.forEach((item, index) => {
+                const p = document.createElement("p");
+                p.className = "border-b border-slate-100 pb-2 flex justify-between";
+                p.innerHTML = `<span class="text-slate-400 font-medium">第 ${index + 1} 題：</span><span class="text-[#4A6B5D]">${item.word}</span>`;
+                container.appendChild(p);
+            });
+        }
+
+        // 線上核對答案
+        function checkAnswers() {
+            let correctCount = 0;
+            const totalQuestions = currentQuestions.length;
+
+            currentQuestions.forEach((item, qIndex) => {
+                const expectedAnswer = item.word; 
+                let studentAnswer = "";
+
+                // 收集該題所有字格的輸入
+                for (let i = 0; i < expectedAnswer.length; i++) {
+                    const inputElement = document.querySelector(`input[data-qindex="${qIndex}"][data-charindex="${i}"]`);
+                    if (inputElement) {
+                        studentAnswer += inputElement.value.trim();
+                    }
+                }
+
+                const isCorrect = (studentAnswer === expectedAnswer);
+                if (isCorrect) {
+                    correctCount++;
+                }
+
+                // 加上清新風紅綠反饋
+                for (let i = 0; i < expectedAnswer.length; i++) {
+                    const inputElement = document.querySelector(`input[data-qindex="${qIndex}"][data-charindex="${i}"]`);
+                    if (inputElement) {
+                        if (isCorrect) {
+                            inputElement.className = "grid-input feedback-correct";
+                        } else {
+                            inputElement.className = "grid-input feedback-incorrect";
+                        }
+                    }
+                }
+            });
+
+            // 顯示評分結果
+            const scoreBoard = document.getElementById("scoreBoard");
+            scoreBoard.classList.remove("hidden");
+            
+            let feedbackText = "";
+            if (correctCount === totalQuestions) {
+                feedbackText = "🎉 太棒了！全部答對！你是中文小達人！ 🌟";
+                scoreBoard.className = "mt-4 p-4 bg-[#EDF3EE] rounded-2xl text-[#4E6E50] font-bold text-center border border-[#D5E4DC] text-lg shadow-sm";
+            } else if (correctCount >= Math.floor(totalQuestions * 0.7)) {
+                feedbackText = `👍 做得好！答對了 ${correctCount} / ${totalQuestions} 題。再加把勁就能滿分囉！`;
+                scoreBoard.className = "mt-4 p-4 bg-[#EDF2F4] rounded-2xl text-[#4E5E6E] font-semibold text-center border border-[#D5DFE4] text-lg shadow-sm";
+            } else {
+                feedbackText = `💪 答對了 ${correctCount} / ${totalQuestions} 題。沒關係，找出不會的詞語，多練習幾次！`;
+                scoreBoard.className = "mt-4 p-4 bg-[#FDF5F2] rounded-2xl text-[#A3524A] font-semibold text-center border border-[#F4E3DD] text-lg shadow-sm";
+            }
+            scoreBoard.innerHTML = feedbackText;
+            showToast(`對答案完成！得分：${correctCount}/${totalQuestions}`, "🌱");
+        }
+
+        // 清空重填
+        function resetExercise() {
+            const inputs = document.querySelectorAll(".grid-input");
+            inputs.forEach(input => {
+                input.value = "";
+                input.className = "grid-input"; // 恢復預設樣式
+            });
+
+            const scoreBoard = document.getElementById("scoreBoard");
+            scoreBoard.classList.add("hidden");
+            scoreBoard.innerHTML = "";
+            showToast("作答已清空，可以重新填寫囉！", "🧹");
+        }
+    </script>
+</body>
+</html>
