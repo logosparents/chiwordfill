@@ -163,7 +163,7 @@
                     <span>🌱</span> 小學中文工作紙自動生成器
                 </h1>
                 <p class="text-slate-500 mt-1 text-sm">
-                    專為家長設計的清新風小學溫習工具 · 每次生成皆會隨機排序
+                    專為家長設計的清新風小學溫習工具 · 每次點擊均會生成全新的十句句子
                 </p>
             </div>
         </div>
@@ -171,7 +171,7 @@
         <!-- 主要操作按鈕 -->
         <div class="flex flex-wrap gap-3">
             <button onclick="generateNewWorksheet()" class="bg-[#729384] hover:bg-[#5F7D70] text-white font-semibold py-2.5 px-5 rounded-xl shadow-sm transition flex items-center gap-2 text-sm">
-                🔄 生成新工作紙
+                🔄 生成全新工作紙
             </button>
             <button onclick="checkAnswers()" class="bg-[#8DA89B] hover:bg-[#7B9589] text-white font-semibold py-2.5 px-5 rounded-xl shadow-sm transition flex items-center gap-2 text-sm">
                 ✔️ 線上對答案
@@ -183,7 +183,7 @@
                 🧹 清空重填
             </button>
             <button onclick="toggleSettings()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-5 rounded-xl transition flex items-center gap-2 text-sm ml-auto">
-                ⚙️ 詞庫設定 (<span id="vocabularyCount" class="bg-[#729384] text-white px-1.5 py-0.5 rounded text-xs">10</span>)
+                ⚙️ 詞庫設定管理 (<span id="vocabularyCount" class="bg-[#729384] text-white px-1.5 py-0.5 rounded text-xs">10</span>)
             </button>
         </div>
 
@@ -192,10 +192,10 @@
             <div class="bg-[#F4F7F5] rounded-2xl p-5 border border-[#E4ECE8]">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-base font-bold text-[#4A6B5D] flex items-center gap-2">
-                        📝 自由增減詞庫與題目
+                        📝 自由增減詞庫與題目模板
                     </h3>
                     <button onclick="triggerRestoreDefaults()" class="text-xs text-[#A3524A] hover:text-[#883C35] font-semibold flex items-center gap-1">
-                        ↩️ 恢復預設十組詞語
+                        ↩️ 恢復預設十組詞語(多重模板)
                     </button>
                 </div>
 
@@ -204,39 +204,39 @@
                     <label class="font-semibold text-slate-700 text-sm">每次生成題目數量：</label>
                     <div class="flex items-center gap-2">
                         <input type="number" id="questionCountLimit" min="3" max="30" value="10" class="w-20 px-3 py-1.5 border border-slate-200 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-[#729384] text-sm">
-                        <span class="text-xs text-slate-400">題 (上限取決於您下方的詞庫總量)</span>
+                        <span class="text-xs text-slate-400">題 (最大上限取決於詞語的總數量)</span>
                     </div>
                 </div>
 
                 <!-- 新增詞語表單 -->
                 <div class="bg-white p-4 rounded-xl border border-[#E2EAE6] mb-6">
                     <h4 class="font-bold text-slate-700 text-sm mb-3 flex items-center gap-1 text-[#4A6B5D]">
-                        <span>➕</span> 新增自訂詞語及題目
+                        <span>➕</span> 新增自訂詞語及題目模板
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
                         <div class="md:col-span-3">
                             <input type="text" id="newWord" placeholder="輸入詞語 (例如: 漂亮)" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#729384]">
                         </div>
                         <div class="md:col-span-7">
-                            <input type="text" id="newSentence" placeholder="輸入包含 {blank} 的句子 (例如: 這裡的花真{blank}。)" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#729384]">
+                            <textarea id="newSentences" placeholder="輸入包含 {blank} 的句子。若有多個句子模板，請用換行或分號分隔 (系統每次生成會隨機挑選一句！)" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#729384] custom-scrollbar"></textarea>
                         </div>
-                        <div class="md:col-span-2">
+                        <div class="md:col-span-2 flex items-center">
                             <button onclick="addNewItem()" class="w-full bg-[#729384] hover:bg-[#5F7D70] text-white font-semibold py-2.5 rounded-lg text-sm transition">
                                 確認新增
                             </button>
                         </div>
                     </div>
-                    <p class="text-xs text-slate-400 mt-2.5">※ 提示：請務必在句子中輸入 <b>{blank}</b>，系統會自動在該位置產生與詞語字數相同數量的中文寫作格子。</p>
+                    <p class="text-xs text-slate-400 mt-2.5">※ 提示：請務必在句子中輸入 <b>{blank}</b> 標記格子位置。例如：「媽媽買的新衣服真{blank}。」。輸入多行句子模板可豐富隨機效果！</p>
                 </div>
 
                 <!-- 目前詞庫列表 -->
-                <h4 class="font-bold text-slate-700 text-sm mb-3">📋 目前詞庫總覽</h4>
+                <h4 class="font-bold text-slate-700 text-sm mb-3">📋 目前詞庫與句子模板總覽</h4>
                 <div class="max-h-60 overflow-y-auto border border-slate-100 rounded-xl bg-white custom-scrollbar">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-[#F4F7F5] border-b border-slate-100 text-xs font-bold text-slate-500">
                                 <th class="p-3">詞語</th>
-                                <th class="p-3">題目句子 (帶有格子位置)</th>
+                                <th class="p-3">題目句子模板庫 (每次生成隨機抽取其一)</th>
                                 <th class="p-3 text-center" style="width: 80px;">操作</th>
                             </tr>
                         </thead>
@@ -331,24 +331,94 @@
     </div>
 
     <script>
-        // 預設十組詞語及句子資料庫
+        // 核心升級：每個詞語內建多個完全不同的精緻語句模板！
         const defaultDatabase = [
-            { word: "圖畫", sentence: "他在美術課上畫了一幅精緻的{blank}，獲得老師讚賞。" },
-            { word: "彩色", sentence: "妹妹用{blank}筆在白紙上畫出了一道美麗的彩虹。" },
-            { word: "漂亮", sentence: "媽媽今天穿了一件非常{blank}的連身裙去慢跑好去處。" },
-            { word: "打掃", sentence: "每逢新年前夕，我們全家人都會合力大{blank}。" },
-            { word: "整潔", sentence: "他的書房總是收拾得十分{blank}，書籍排列得很整齊。" },
-            { word: "馬路", sentence: "過{blank}的時候，我們必須看清紅綠燈，注意安全。" },
-            { word: "知道", sentence: "如果小明早{blank}這件事，他一定會來幫忙。" },
-            { word: "感謝", sentence: "我們應該要常常面帶笑容，對幫助我們的人表示{blank}。" },
-            { word: "要求", sentence: "教練對我們的練習{blank}非常嚴格，希望我們能奪冠。" },
-            { word: "放開", sentence: "風箏越飛越高，爸爸叫我慢慢{blank}手中的線繩。" }
+            { 
+                word: "圖畫", 
+                sentences: [
+                    "他在美術課上畫了一幅精緻的{blank}，獲得老師讚賞。",
+                    "客廳的牆壁上掛著一幅美麗的{blank}，讓家裡顯得很有生氣。",
+                    "弟弟在畫紙上創作了一幅色彩繽紛的{blank}，並送給了外婆。"
+                ] 
+            },
+            { 
+                word: "彩色", 
+                sentences: [
+                    "妹妹用{blank}筆在白紙上畫出了一道美麗的彩虹。",
+                    "天空中綻放著一朵朵{blank}的煙花，把夜空點綴得絢麗無比。",
+                    "這本童話書裡面配有精美的{blank}插圖，小朋友都很喜歡閱讀。"
+                ] 
+            },
+            { 
+                word: "漂亮", 
+                sentences: [
+                    "媽媽今天穿了一件非常{blank}的連身裙去參加晚宴。",
+                    "花園裡的玫瑰花開得真{blank}，引來了許多蝴蝶在花叢中飛舞。",
+                    "這份生日禮物包裝得十分{blank}，給了小麗一個很大的驚喜。"
+                ] 
+            },
+            { 
+                word: "打掃", 
+                sentences: [
+                    "放學後，同學們分工合作，把課室{blank}得乾乾淨淨。",
+                    "星期天，我們全家人合力把家裡徹底{blank}了一番。",
+                    "清潔工人每天清晨就開始工作，辛勤地{blank}街道。"
+                ] 
+            },
+            { 
+                word: "整潔", 
+                sentences: [
+                    "他的書房總是收拾得十分{blank}，書籍排列得很整齊。",
+                    "養成保持個人衛生和環境{blank}的好習慣，是每個人應盡的責任。",
+                    "老師稱讚班長的抽屜收拾得非常{blank}，值得大家學習。"
+                ] 
+            },
+            { 
+                word: "馬路", 
+                sentences: [
+                    "過{blank}的時候，我們必須看清紅綠燈，注意交通安全。",
+                    "寬闊的{blank}上車來車往，過路時千萬不能嬉戲追逐。",
+                    "馬路兩旁種滿了茂盛的樹木，在炎熱的夏天為路人遮擋陽光。"
+                ] 
+            },
+            { 
+                word: "知道", 
+                sentences: [
+                    "如果小明早{blank}這件事，他當天一定會前來幫忙。",
+                    "我好想{blank}這本偵探小說的結局，所以一直在專心閱讀。",
+                    "經過老師耐心的講解，我終於{blank}這道難題該怎麼解答了。"
+                ] 
+            },
+            { 
+                word: "感謝", 
+                sentences: [
+                    "我們應該要常常面帶笑容，對幫助過我們的人表示{blank}。",
+                    "為了{blank}父母無微不至的照顧，小華親手做了一張賀卡送給他們。",
+                    "義工們熱心奉獻的精神，贏得了社區居民一致的讚賞與{blank}。"
+                ] 
+            },
+            { 
+                word: "要求", 
+                sentences: [
+                    "教練對我們的練習{blank}非常嚴格，希望我們能在比賽中奪冠。",
+                    "遵守公共場所的秩序，是我們每個人都應該達到的基本{blank}。",
+                    "爸爸勉勵我要嚴格{blank}自己，做事不可半途而廢。"
+                ] 
+            },
+            { 
+                word: "放開", 
+                sentences: [
+                    "風箏越飛越高，爸爸叫我慢慢{blank}手中的線繩。",
+                    "妹妹不小心手一滑，{blank}了牽著小狗的繩子，幸好爸爸及時拉住。",
+                    "當你感到壓力很大時，不妨試著{blank}心情，到郊外散散步。"
+                ] 
+            }
         ];
 
         // 記憶體中的工作詞庫，允許自由加減
         let activeDatabase = JSON.parse(JSON.stringify(defaultDatabase));
 
-        // 當前隨機生成出的考卷題目列表
+        // 當前隨機生成出的考卷題目列表 (包含被選中的隨機句子)
         let currentQuestions = [];
 
         // 全域回呼函數 (用於自訂確認視窗)
@@ -441,10 +511,14 @@
             activeDatabase.forEach((item, index) => {
                 const tr = document.createElement("tr");
                 tr.className = "border-b border-slate-50 hover:bg-[#F9FBFA] transition";
+                
+                // 將多個句子展示成列表樣式，方便家長查看
+                const sentenceListHTML = item.sentences.map(s => `<div class="mb-1 text-xs">• ${s}</div>`).join("");
+
                 tr.innerHTML = `
-                    <td class="p-3 font-bold text-slate-800">${item.word}</td>
-                    <td class="p-3 text-slate-500 font-mono text-xs">${item.sentence}</td>
-                    <td class="p-3 text-center">
+                    <td class="p-3 font-bold text-slate-800 align-top">${item.word}</td>
+                    <td class="p-3 text-slate-500 align-top">${sentenceListHTML}</td>
+                    <td class="p-3 text-center align-top">
                         <button onclick="deleteItem(${index})" class="text-[#A3524A] hover:text-[#883C35] font-semibold hover:underline text-xs">
                             刪除
                         </button>
@@ -454,35 +528,51 @@
             });
         }
 
-        // 新增詞語及句子
+        // 新增自訂詞語及多個句子模板
         function addNewItem() {
             const wordInput = document.getElementById("newWord");
-            const sentenceInput = document.getElementById("newSentence");
+            const sentencesInput = document.getElementById("newSentences");
             
             const word = wordInput.value.trim();
-            const sentence = sentenceInput.value.trim();
+            const rawSentences = sentencesInput.value.trim();
 
             if (!word) {
                 showToast("請輸入詞語！", "❌");
                 return;
             }
-            if (!sentence) {
-                showToast("請輸入對應的題目句子！", "❌");
+            if (!rawSentences) {
+                showToast("請輸入題目句子！", "❌");
                 return;
             }
-            if (!sentence.includes("{blank}")) {
-                showToast("句子中必須包含 {blank} 作為挖空位置！", "❌");
+
+            // 支援分行、中文分號或英文分號將句子分割為陣列
+            const rawArray = rawSentences.split(/[\n;；]+/);
+            const sentences = [];
+
+            for (let s of rawArray) {
+                const trimmed = s.trim();
+                if (trimmed) {
+                    if (!trimmed.includes("{blank}")) {
+                        showToast(`句子中必須包含 "{blank}" 來標記中文格子位置！\n出錯句："${trimmed}"`, "❌");
+                        return;
+                    }
+                    sentences.push(trimmed);
+                }
+            }
+
+            if (sentences.length === 0) {
+                showToast("請輸入至少一個有效的題目句子！", "❌");
                 return;
             }
 
             // 加進記憶體詞庫
-            activeDatabase.push({ word, sentence });
+            activeDatabase.push({ word, sentences });
             
             // 清空輸入框
             wordInput.value = "";
-            sentenceInput.value = "";
+            sentencesInput.value = "";
             
-            showToast("成功加入新詞語！", "🎉");
+            showToast("成功加入自訂詞語與句子模板庫！", "🎉");
             renderVocabularySettings();
             
             // 自動調高上限
@@ -507,13 +597,13 @@
             }
         }
 
-        // 觸發恢復預設十組
+        // 恢復預設十組（每組內建 3 套模板）
         function triggerRestoreDefaults() {
-            openConfirmModal("確定要放棄目前所有的自訂詞庫，並還原為最初預設的十組詞語嗎？", function() {
+            openConfirmModal("確定要放棄目前所有的自訂詞庫，並還原為最初預設的十組詞語及多重模板句庫嗎？", function() {
                 activeDatabase = JSON.parse(JSON.stringify(defaultDatabase));
                 document.getElementById("questionCountLimit").value = 10;
                 document.getElementById("questionCountLimit").max = 10;
-                showToast("已成功重設為預設詞庫！", "🔄");
+                showToast("已重置為預設多模板詞庫！", "🔄");
                 renderVocabularySettings();
                 generateNewWorksheet();
             });
@@ -530,7 +620,7 @@
             return array;
         }
 
-        // 生成全新工作紙
+        // 生成全新工作紙 (每次生成皆完全隨機全新抽取，徹底重置)
         function generateNewWorksheet() {
             // 取得家長設定的生成題數
             const limitInput = document.getElementById("questionCountLimit");
@@ -546,9 +636,19 @@
                 limitInput.value = 3;
             }
 
-            // 隨機選出指定數量的題目，並打亂順序
-            const shuffledPool = shuffle([...activeDatabase]);
-            currentQuestions = shuffledPool.slice(0, countLimit);
+            // 1. 打亂詞庫順序
+            const shuffledPool = shuffle(JSON.parse(JSON.stringify(activeDatabase)));
+            const selectedPool = shuffledPool.slice(0, countLimit);
+            
+            // 2. 對於被選中的每個詞語，從它的句子列表中隨機挑選一句
+            currentQuestions = selectedPool.map(item => {
+                const rIndex = Math.floor(Math.random() * item.sentences.length);
+                const chosenSentence = item.sentences[rIndex];
+                return {
+                    word: item.word,
+                    sentence: chosenSentence
+                };
+            });
             
             const container = document.getElementById("questionsContainer");
             container.innerHTML = ""; // 清空舊題目
@@ -569,7 +669,6 @@
                 let htmlStr = `<span>${questionNumber}. ${parts[0]}</span>`;
                 
                 // 2. 組合線上互動式輸入格子 (no-print)
-                // 移除限制 IME 的 maxlength 屬性
                 htmlStr += `<span class="interactive-input inline-flex mx-1">`;
                 for (let i = 0; i < wordLength; i++) {
                     htmlStr += `<input type="text" class="grid-input" 
@@ -594,13 +693,21 @@
                 container.appendChild(qDiv);
             });
 
-            // 生成答案頁
+            // 重新生成答案頁
             generateAnswerKey();
             
-            // 隱藏線上得分看板
+            // 隱藏線上得分看板與清除評分提示
             const scoreBoard = document.getElementById("scoreBoard");
             scoreBoard.classList.add("hidden");
             scoreBoard.innerHTML = "";
+
+            // 自動將游標聚焦在第一道題目的第一個格子上
+            setTimeout(() => {
+                const firstInput = document.querySelector('input[data-qindex="0"][data-charindex="0"]');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+            }, 100);
         }
 
         // 設置極其流暢的鍵盤與游標導航系統 (解決「格子後不能立即跳到下一行」的問題，並支援 IME 輸入)
@@ -725,7 +832,7 @@
             }
         }
 
-        // 列印工作紙的強化機制函數 (解決部份沙盒/iframe限制列印的問題)
+        // 列印工作紙的強化機制函數
         function printWorksheet() {
             window.focus();
             window.print();
